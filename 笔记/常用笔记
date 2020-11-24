@@ -453,15 +453,106 @@ qbd修改：从缓存读取到内容（读取不到赋值空）后调用open_vol
 2.qbd client老版本不支持时，open_volumem每次都需要global转发，即：qbd-> global -> local， local-> global->qbd；
 3.center_ips缓存多个，leader center ip放在第一个；
 
+引起同步时间太长导致会话超时的因素，1、网络，2、磁盘io，3、ticktime
+网络都是不可靠的，不能通过方面去解决，只能通过磁盘，ticktime可以考虑调整，从切换center时间中去取舍
+另外我现在想在本地中看能不能复现出来
+
+
+
+本周工作：
+1.完成open_volume_comcom适配的需求分析，澄清，代码开发完成，待测试，总体完成60%；
+2.分析浦发硅谷银行zk不稳定导致临时节点消失问题：zookeerper 服务在同步日志过程中耗时太长，花了9465ms，网上查找相关案例，同步日志ZK无法响应外部请求，即无法检测到心跳，进而引发session过期，session过期会引发zk临时节点的消失，根据日志查看zk源码，代码中只是简单的把事务日志刷入磁盘，不涉及到节点之间的的网络交互，却耗时9000多ms，因此在本地环境复现，在zk的节点，给系统盘增加io压力，但是没有出现fsync-ing同步超时的告警，于是通过修改zk代码复现，leader 节点出现fsync这个会出现session超期，follower节点出现fsync概率性出现follow er与leader连接断开。
+
+下周工作：
+1.继续neonsan容器化部署研究；
+2.继续open_volume_comcom适配的需求、开发验证；
+3.3.0.1版本打包、准备发布材料等相关工作；
 
 
 
 
 
 
+本周工作：
+1.完成open_volume_comcom适配的自验证，qbd进行适配后在整体测试下，总体完成90%；
+2.完成NEONSAN-813开发验证，代码已经merge；
+3.完成NEONSAN-836 NeonSAN自动化打包时生成每个包的md5值开发，代码已经merge；
+4.主要考虑后续neonsan容器化部署时zk、mysql数据需要持久化，学习k8s容器持久化存储中PV PVC StorageClass相关技术特效；
+5.完成3.0.1版本发布相关材料准备归档，3.0.2打包，v2.5.5,V3.0.1手动生成每个包的md5值，已经归档到anybox；
+
+下周工作：
+1.bug 840的分析和修改;
+2.继续neonsan容器化部署研究；
+
+本周工作：
+1.分析浦发硅谷银行导致磁盘IO压力的原因，补充了一些可能引起磁盘io压力过大的原因和完善故障报告；
+2.完成NEONSAN-840开发验证，代码已经push，review有一些检视意见，待修改；
+
+下周工作：
+1.qbd open_volume_comcom的验证;
+2.neonsan容器化部署研究；
+
+
+SELECT s.uuid, s.free, t.threshold FROM ssd s, (select CEILING(AVG(free)*0.9) AS threshold FROM ssd, store WHERE store.status='OK' AND ssd.status='OK' AND ssd.store_id=store.id AND store.rg_id IN (SELECT store.rg_id FROM store, ssd WHERE ssd.store_id=store.id AND ssd.uuid='09f55ec5-a359-4390-af1b-f21c549fe533')) t  WHERE s.uuid='09f55ec5-a359-4390-af1b-f21c549fe533';
+
+
+1)肯定的是升级过程不会冲掉个性化配置。zookeeper 的问题在升级之前即存在，只是没有引发NeonSAN故障。
+2)我们在排查时结合zookeeper的源代码和日志，发现故障的直接原因是写IO超时，这个环境是融合部署环境，物理节点上既有zookeeper，NeonSAN存储服务，NeonSAN监控，又有虚拟机在运行，其中zookeeper,NeonSAN 日志，以及监控都会在线往系统盘写日志，因此会存在相互影响的情况。通过对比EQ的环境，EQ的环境负载CPU、内存资源使用率比较小，日志没有出现过fsync-ing同步时间超长的告警，而GD环境负载一般都是70%以上，日志中经常出现fsync-ing同步时间超长的告警。
+3)zookeeper的最佳实践也建议将zookeeper作为独立集群进行单独部署，当前的融合部署模式不符合zookeeper的最佳实践要求。官网中关于磁盘性能对zookeeper写事务的影响和dataLogDir的配置建议说明：http://svn.apache.org/repos/asf/zookeeper/trunk/docs/zookeeperAdmin.html：
+
+这个我想这样改：
+rebalanceSsd函数中循环调用policy.ChooseAltReplicaPlace查询，首次调用的时候第三个参数restrict.ExcludeStoreList空，查询的replicaPlace经过后面检查如果不满足，把replicaPlace对应的storeId加到restrict.ExcludeStoreList再次查询，直到查询满足条件的或者查询失败的结束，查到满足条件的可以迁移，失败则不能迁移
 
 
 
+neonsan create_volume --volume poo/vol0  --size 2T  --repcount 2 --thick_prov 
+
+1.构造集群中如下场景：
+domain1 store 31 43 5个ssd 剩余大概800G,  800G平摊到5块ssd中
+domain2 store 41    2个ssd 剩余大概700G， 700G平摊到2块ssd中,
+domain3 store 42    2个ssd 剩余大概100G， 100G平摊到2块ssd中,
+
+2.选择domain3 store 42一块使用率较高的ssd，rebalance_ssd，此时 domain store ssd的排序是：
+domain1 43 ssd1
+domain1 31 ssd2
+
+domain2 41 ssd1
+
+
+现在会先尝试迁移到domain1 43 ssd1，domain1 31 ssd1,不满足，最后迁移到domain2 41 ssd1
+
+
+neonsan remove_ssd --ssd_uuid 6f99432e-42d8-4fd0-ba1e-003d38f4e2bd  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid e9c84436-c130-47b0-bb3a-48fe458fbed6  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid 2dfbb532-b24c-4fbb-8262-42975485d6ab  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid 9ed4c7d5-7d01-4f8d-9fec-6d1d9bf607c9  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid 10ada5e3-bfa3-44d1-9556-cd9f039d2abc  --evacuate_data no
+sleep 10
+
+neonsan remove_ssd --ssd_uuid c9701ff0-36c0-422c-b7af-838bcb3522f5  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid 45e0d44e-287f-49cc-a06f-1438fcad06e9  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid 3fe15523-c355-4426-ab2d-f2f5136d0a53  --evacuate_data no
+sleep 10
+neonsan remove_ssd --ssd_uuid f4e41ae4-8f7d-473c-82d1-a2701d4c7d52  --evacuate_data no
+
+
+neonsan rebalance_ssd --ssd_uuid f29fa52d-6d26-4b9f-8d89-72fff948fa48
+
+
+本周工作：
+1.qbd适配完成后，大规模部署open_volume_common的整体测试，没有发现什么问题，代码已经push，待review：
+2.完成NEONSAN-840场景未考虑全的问题；
+3.Neonsan需要支持centos8.2，centos8.2版本的打包，总体已经完成%60；
+
+
+下周工作：
+1.centos8.2版本的打包、相关驱动下载和验证；
 
 
 
