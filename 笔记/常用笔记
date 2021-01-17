@@ -554,6 +554,321 @@ neonsan rebalance_ssd --ssd_uuid f29fa52d-6d26-4b9f-8d89-72fff948fa48
 下周工作：
 1.centos8.2版本的打包、相关驱动下载和验证；
 
+git clone https://github.com/Open-CAS/open-cas-linux.git
+cd open-cas-linux
+git checkout origin/v20.3.3
+git submodule update --init
+./configure
+make
+make install
 
+本周工作：2020-11-23 -2020-11-29
+1.工单处理：
+    1.私有云华创：一块已经删除的硬盘为降级状态告警  --告警残留，按照 https://cwiki.yunify.com/pages/viewpage.action?pageId=23670454处理，第二天向付裕确认，问题解决；
+    2.私有云富春云：客户自己搭建的一台redis主机，在今天上午10:42:39发生了主从切换 --查看Neonsan相关日志，无相关异常日志，应该不是neonsan存储问题引起；
+    3.私有云滕州市政府：早上有部分卷降级触发了qbd error告警--当时磁盘io压力大，aio_post和aio_comp的个数不一样，可能就是盘没处理完，会引起卷降级；--看下日志是否有COW
+    4.川庆砖探：这个环境又断电后 卷降级了  recovry失败--rose帮看，recovery失败时因为磁盘空间不足引起，解决措施：gc了一下，现在打开auto_balance，先均衡，然后recovery成功；
+    客户通过iscsi连不上neonsan环境--改了SCST的配置，，客户连上了卷
+    5.泉峰集团一个环境有slow io 大量的告警 -- 按照https://cwiki.yunify.com/display/NeonSAN/05-SLOW+IO发现是save_metadata引起，何智已经修改配置参数优化，暂时没有出现告警；-补充作何改动，现在环境是否保留改动？
+    6.英大人寿，有2台虚拟机开机失败，iaas这边报 qbd 挂载超时 30s
+    1.看syslog日志open_volume_common[vol/vosi-d7u0x9we.img:/etc/neonsan/qbd.conf]:28 错误码2；
+    2.查看当时center日志，发现center日志也收到open volume的消息，但是后面没有响应的日志了；
+    3.查看center日志数据库盘满了导致的，导致请求都在执行InsertAuditRecord的位置卡住了，所有的请求都没有得到处理。
+
+    改进措施：
+    1.清理的大的日志文件alertmanager.log；
+    2.在logrorate中配置alertmanager.log日志切割转存；防止再出现空间爆满--已经实施
+    7.英大人寿问题2：用户给数据盘做个备份，center日志中报空间不足--排查发现是alertmanager.log日志过大空间占满，解决错误清理日志，配置上logrotate日志切割转存；
+    8.泰康私有云:老版本的neonsan （1.0.9） 一个 dw 管理节点（只有zookeeper和mysql） 根文件系统只读了，需要重启，能帮忙检查一下，是否可以直接重启?-- 检查两个节点的zk和myql的是正常的，这个节点可以直接重启，硬盘和raid 卡都检查过，没有发现问题
+    9.sh1a公有云：vos-95w11bvd没有创建成功--NeonSAN收到的，和反馈失败的卷名字不一样，通过NeonSAN测试了一下创建卷，正常的；
+     是哪个用户创建的？
+     usr-gFS5392T，通过备份创建mysql，然后卡在创建硬盘了
+     可能是还在导数据？
+     感觉是盘太大，job超时了，可以加大 创建的 超时时间
+     snapshot恢复成vos花了 15 小时；
+     从snapshot节点 获取数据解压 并导入neonsan 。 一个管道进行。 没有限速。如果要优化的话，我觉得需要从neonsan入手。 分析neonsan import_diff 是否可以快
+     do_create_volume_from_snapshot 这个函数import_diff的输入时export_diff出来的么？
+     我们研究一下，看能否加速，在混插环境的 import_diff？
+     qbd从2.1.0版本支持挂载volume snapshot，如果比较好的多线程读写工具，也可以换种思路导出。import_diff 如果能实现肯定是最快的
+     应该是可以实现的
+     备份如果只用快照实现，有什么问题吗？备份链的话，性能影响大不大？友商基本都是快照，不想我们要导到外部；
+     现在还不支持，需要后续开发
+     备份基于快照实现，其实备份的数据还是在当前的存储设备上；
+     怎么能登录执行 import_diff的节点呢？先分析一下性能慢的原因；
+     硬盘创建好了，主机状态有问题，麻烦看下
+     sh1a 巡检发现交控有个plus集群异常了 neonsan有做调整吗？报的是文件系统的错误
+     这是neonsan volume 吗
+     是的
+     没有做过
+     mysql 无论如何不可能造成文件系统故障的，iaas 也不会
+     通过qemu后端挂载的neonsan volume， qemu日志里没有报错
+     这个待会得找一台，先做snapshot，然后用xfs_repair修复，但三台都坏，非常蹊跷
+     vm内部也没有io error，第一次报错时间基本一致，
+        Nov 27 19:07:46 i-m7voa7sn
+        Nov 27 19:07:45 i-n5dh1g5b
+        Nov 27 19:07:45 i-0wxq90b5
+    我刚刚联系上客户了  这个是基于他们的集群备份创建的新集群
+    那意思就是通过备份创建的盘是坏的
+    是的
+    客户允许我们重启 我先重启一下
+    那跟下午的问题是一回事吧
+    是的
+    重启了也一直报那个错；
+    得repair，xfs error不会自己就好了；
+    这个有备份 可以直接修复；
+    先打个快照
+    客户是基于快照来创建的集群 已经有备份了
+    我这边操作不了 从vm里 没办法umount
+    得把mysql停掉，lsof /data没有占用了再试试
+    mysql都没有启动，之前看mysql的日志是这样子的
+    lsof /data可以看到，我在操作i-0wxq90b5，得从db应用层面停，杀掉之后还会起来
+    kill掉几个进程以后 可以umount，我在修复i-m7voa7sn
+    i-0wxq90b5:修完挂载不报了
+    我操作下
+    可以了，你重启下集群再看下还报错么
+    好的，有问题，mysql起不来
+    说明备份恢复过程里面有数据异常
+    @Ada 如果客户基于备份重新创建一个集群 能解决吗？db那边不好修复 而且数据没了
+    原集群还在吗
+    在的
+    原集群的卷是哪个？
+    我的意思是这个备份很可能就是坏的。
+    cl-vo5fqdzh，源集群是这个；
+    那这个集群还是好的吗？
+    是的，我明天联系客户 让客户重新创建一个备份，然后试下
+    为什么非要通过备份创建，不是有克隆吗？
+    mysql plus没有克隆，只能基于备份创建新的
+    导入的过程中打了很多snapshot，不过应该是每次导入一个备份之后就删掉了，后续可以把这些snapshot留着，如果最后一个启动不了，可以rollback试一下
+    明天做备份得做全量备份，再创建？
+    vol/vos-hrdg2z6s_ss-gkvu9ko8#vos-95w11bvd_.img 这个卷名的意思是 vos-95w11bvd 是卷vos-hrdg2z6s的备份卷？
+    不是，z6s是原盘，ko8是快照ID，在用这个快照生成最终卷 bvd；
+    嗯，明白了，看到备份过来的卷数据跟原卷大小有些差别，那可能是这个snapshot之后原卷又有写入；
+    肯定有写入，明天看全量备份有没有异常吧
+    好的
+    交控根据备份创建新集群失败了，今天根据备份: ss-opoydyll重新创建了一次集群，还是失败，麻烦看下
+    还是失败指的是什么失败呢，文件系统不可用吗？
+    创建集群job失败了，所以运维账号没创建
+    那你得找到集群job失败的原因；
+    到原因了，是因为这个节点重放redo比较慢，用时6分，其他节点用时2分钟，由于该节点没有重放redo、迟迟没有加入集群，因此这个节点restore时没走完全部流程，其实带来的影响主要是运维账号没初始化，我们较新版本是可以自动订正的，即使restore指令失败了，集群状态也会自动订正。db同事已经帮客户把这个集群修复好了
+    
+    10.泉州移动私有云# 迁移数据时，一个volume 降级：原因跟480应该是一样的，本质上都是之前的open volume hung住了，在volume set新meta version之后这个open volume请求才到达store，store上面新的meta version比这个openvolume里的新，所以报这个错，480在2.5版本里面已经fix了
+    11.客户前端业务使用sanc，后端oracle rac  使用独立neonsan全闪存储， 客户反馈这周访问oracle比较慢。能否麻烦帮忙一起检查下 咱们2个存储池的性能，确定没问题，让客户找应用方再排查下业务 ：https://tenant.quanxiangyun.com/qingcloud/manage/tickets/2430
+    检查网络没有延迟，日志没有slow io，何智帮忙检查：确认了是 SQL 的问题，跟Neonsan没关系。
+    
+    
+    
+    
+     
+
+2.Neosan支持centos8.2：
+    1.编译脚本，rpm包的编译整合成一套，代码已经push;
+    2.SCST驱动编译打包，已经编译成功；
+    
+
+下周任务：
+    1.Bug修改和验证；
+    2.neonsan容器化部署研究；
+    
+
+
+
+周四上午10：00准备review一下bitmap的最新设计文档以及代码，大家时间有没有冲突的？
+
+
+设计文档：https://yunify.anybox.qingcloud.com/f/3682955
+https://git.internal.yunify.com/SAN2.0/qfcenter/commit/dde9c4dcac08d481bfd40e4ecc6d3bba9f12f556
+https://git.internal.yunify.com/SAN2.0/qfa/commit/c15cd87d111d47570cd0a5a118d0fd7e89331840
+
+09-31204-750025-997324
+
+
+systemctl stop firewalld
+systemctl disable firewalld
+/usr/sbin/sestatus -v
+getenforce
+sed -i 's/enforcing/disabled/' /etc/selinux/config
+setenforce 0
+/usr/sbin/sestatus -v
+swapoff -a 
+sed -ri 's/.*swap.*/#&/' /etc/fstab
+
+cat >> /etc/hosts << EOF
+192.168.101.2 k8s-master
+192.168.101.3 k8s-node1
+192.168.101.4 k8s-node2
+EOF
+
+yum install ntpdate -y
+
+cd /root/debs-ubuntu_16.04.5/ && dpkg -r pitrix-neoncenter-dbg pitrix-neonsan-monitor pitrix-neonsan-tool pitrix-neonstore-dbg && dpkg -i pitrix-neoncenter-dbg-3.0.2.0.0.1.deb pitrix-neonsan-monitor-3.0.2.0.0.1.deb  pitrix-neonsan-tool-3.0.2.0.0.1.deb pitrix-neonstore-dbg-3.0.2.0.0.1.deb && supervisorctl stop neoncenter neonmonitor neonstore && supervisorctl start neoncenter neonmonitor neonstore
+
+
+本周任务：
+1.v3.0.2版本打包、归档、相关材料的准备；
+2.neonsan支持centos8.2代码入库后，在jenkins自动化出包的测试，发现一个脚本无执行权限的问题已经解决；
+3.补充open_volume_common适配的测试场景；
+4.熟悉kubsphere容器平台，熟悉在其平台上部署mysql、创建任务等操作。
+
+    
+
+下周任务：
+    1.Bug修改和验证；
+    2.继续熟悉使用kubsphere容器平台；
+    
+    
+最近涉及到KA客户以及公有云的环境改造和优化项目大约有下面几项，需要大家跟一下，把每个项目分配到个人了，后面有其他的支持再轮流安排。 注意，这些具体实施由服务团队同事负责，我们要帮助他们确认好方案，以及解决实施过程中遇到的技术问题。
+富春云混插环境的优化调试（方案已经提供，需要跟客户讨论）素香
+浦发硅谷环境的整体改造（已经草拟方案，需要研发参加评估）兴祥（远志支持）
+泰康老版本存储的升级（离线还是在线方案还在等待客户确认）国武，佳宁
+泰康需要2位研发保持工作日和非工作时间手机畅通 国武，佳宁
+公有云RDMA适配 马强
+
+admin/Zhu88jie
+
+本周工作：
+1.大规模部署open_volume_common适配检视意见的修改；
+2.熟悉kubsphere容器平台：
+（1）在其平台上创建企业空间、项目、帐户和角色；
+（2）在其平台上创建存储卷；
+（3）在其平台上部署自制的应用，应用下面添加服务组件，服务组件分成有状态的服务和无状态的服务；Neonsan的容器化部署，我的理解实际上就是部署一个Neonsan的应用，neonsan组件包括：zk、mysql、center、store、monitore，其中zk、mysql是用状态的服务，即需要持久化存储一些数据。
+3.硅谷环境的整体改造方案分析和zk在线扩容和减容的验证；
+
+
+
+下周工作：
+    1.Bug修改和验证；
+    2.继续熟悉使用kubsphere容器平台；
+    
+    
+本周工作：
+1.Neonsan容器化部署：
+（1）制作Ubuntu1604基础镜像；
+（2）基于Ubuntu1604基础镜像制作zookeeper的镜像；
+（3）基于Ubuntu1604基础镜像制作galera mysql的镜像；
+（4）基于Ubuntu1604基础镜像制作center的镜像；
+（5）基于Ubuntu1604基础镜像制作store的镜像；
+（6）基于Ubuntu1604基础镜像制作monitor的镜像；       (7)验证制作出来的镜像容器化部署：目前容器化的网络网络模式host的，网络与物理机使用相同的网络空间，网络不隔离。store的容器需要把磁盘直通到容器里面，目前除了monitor不能单独容器部署（原因是monitore依赖store的配置。并且monitor需要通过ssh远程查询zk和mysql的状态），其他功能正常。
+
+2.V3.0.2版本重新打包归档；
+
+
+
+下周工作：
+    1.验证浦发硅谷应该数据库导出后导入到新库后数据的完整性；
+    2.继续容器化部署研究；
+    
+
+本周工作：
+1.Neonsan容器化部署与容器团队的石永红交流讨论，其解答了一些疑问和概念上的问题，并给了一些接接下来容器化部署的步骤：
+  （1）把容器的配置写成一些yaml文件，用kubectl apply -f yaml的方式把neonsan部署和启动；
+  （2）把这些yaml打包成helm chart，把neonsan做出可以放到应用商店的应用；
+2.完成ubuntu20.04 neonsan安装包的自动化；
+3.完成v3.0.3的bug NEONSAN-917修改和验证；
+4.浦发硅谷数据库导出数据的完整行检查，首次导出的数据没有包含neonsan相关的函数和过程，加-R参数再次导出已经包含
+  
+
+
+下周工作：
+    1.继续容器化部署研究；
+
+
+
+试用期总结1.工作内容及工作成果 ：
+1.参与neonsan开发和维护：（1）开发支持stop evict_store、rebalance_ssd、recovery_volume的功能特性，完成30+的bug的修复；（2）完成大规模部署open_volume_common的适配开发；
+2.负责neonsan的编译打包和支持新的OS版本、以及neonsan版本的发布。（1）新增支持ubuntu18.04.5、centos8.2、ubuntu20.04 OS的neonsan版本，并且已经实现自动化；（2）优化编译脚本，编译脚本统一，使开发人员都能使用本地脚本编译打包版本，极大提高项目团队的工作效率；（3）负责V2.5.0-V2.5.4、V3.0.0-V3.0.2 9个版本相关材料的准备和发布；
+3.负责galera数据库的开发和维护：（1）解决了galera_cluster集群全部宕机，出现缺少/data/galera/mysql/mysql无法自愈、galera_cluster集群宕机两个节点，节点恢复后集群无法自愈等4个BUG；
+4.负责zookeeper相关问题定位和分析：（1）分析定位浦发硅谷银行临时节点消失引起故障的原因，并提出相应的解决优化措施；（2）青岛创恒 center切换为主之后卡住，引起center切换的原因是center连接不上zk，分析zk异常的原因；（3）整理和验证zookeeper扩容和缩容的方案；（4）整理和验证Xenondb数据库迁移到galera数据库的方案；
+5.工单处理：处理工单15+个；
+6.负责neonsan容器化部署：目前已经完成各个组件的镜像制作、镜像已经在docker中部署验证通过；
+
+2.下一步的工作计划：
+ 1.把容器化部署的配置写成一些yaml文件，用kubectl apply -f yaml的方式把neonsan部署和启动；
+ 2.把这些yaml打包成helm chart，把neonsan做出可以放到应用商店的应用；
+ 3.参与neonsan开发和维护，更加熟悉neonsan功能特性和优势，比如极短IO路径，为neonsan设计和开发更有竞争力的功能特性，为neonsan商业化更加成功贡献自己的一份力量
+试用期总结填写提示试用期总结内容必须包含以下两项：1.工作内容及工作成果 2.下一步的工作计划
+对公司的建议1.公司代码规范化，制定C、 C++、go等语言的编程规范，所有相关的研发部门都遵守同一种规范，利于代码的开发和维护；
+2.加强CICD持续集成、持续交付流水的建设，比如所有研发部门使用同一套流水线平台，各个部门的CICD经验可以得到分享，从而提高开发效率；
+3.部门内加强各种技术经验的分享和交流活动，比如每两周技术经验分享或者编程技巧、算法的分享，加强工程师文件建设。
+
+
+现在升级脚本问题：如果节点较多，没升一个节点需要输入节点IP，容易输错或者忘记升级到哪个节点，有可能会重复升级或者漏升级节点
+
+修改方案1：能够一键式完成升级，正常的话不需要多次输入节点IP
+1.升级center时，获取到center的IP_LIST,然后遍历IP LIST按照现在流程升级，如果是leader center，跳过，待其他follower节点升级完最后再升级center leader
+2.每升级成功一个节点，记录下升级成功的节点，如果过程中升级异常，退出，排查解决后，继续按照步骤1升级，然后遍历IP LIST判断是否已经升级，已经升级的直接跳过；
+3.store的也是同样的方式
+
+
+保守一点的修改方案2：
+升级流程和1一样，只是升级加入一个交互式的人为确认（y/n）是否继续升级下一个节点，可以人为检查升级过程是否有异常打印，也不需要每次输入节点IP。
+
+NEONSAN-939问题引入回溯：
+问题原因：
+1.最初count返回的满足过滤条件的总数，701的需求加上支持group_name过滤后，因为对pn count的理解不完全，返回把pn count也当做一种过滤后卷的数量；
+2.修改完成后和portal联调不充分；
+
+
+修改：count返回除了pn、count，满足所有过滤条件的卷的数量；
+
+
+本周工作：
+1.Neonsan容器化部署与容器团队的石永红交流讨论，其解答了一些疑问和概念上的问题，并给了一些接接下来容器化部署的步骤：
+  （1）把容器的配置写成一些yaml文件，用kubectl apply -f yaml的方式把neonsan部署和启动；
+  （2）把这些yaml打包成helm chart，把neonsan做出可以放到应用商店的应用；
+2.完成ubuntu20.04 neonsan安装包的自动化；
+3.完成v3.0.3的bug NEONSAN-917修改和验证；
+4.浦发硅谷数据库导出数据的完整行检查，首次导出的数据没有包含neonsan相关的函数和过程，加-R参数再次导出已经包含
+  
+
+
+下周工作：
+    1.继续容器化部署研究；
+    
+    
+
+本周工作：
+1.Neonsan容器化部署与容器：
+（1）熟悉了解rook的架构：rook包含自身的两个pod：rook-discover,rook-ceph-agent，其他存储自身的pod；
+（2）了解kubernets yaml的格式，尝试把zk的部署写成yaml配置，用kubectl apply -f yaml部署，遇到不使用本地镜像制作的镜像而是pull远端镜像的问题，在石永红帮助下已经解决；
+  
+2.浦发硅谷迁移改造：已经梳理出zk迁移、数据迁移的详细步骤，并且与黄蔚然沟通细节，整个项目实际的操作细节黄蔚然在元旦节整理出来，然后组织review；
+3.完成bug NEONSAN-939修改和验证，安装包已经更新到portal 周杨环境，待其确认；
+4.完成升级脚本每升级一个store需要输入节点IP问题的优化；代码已经push，待review；
+  
+
+下周工作：
+    1.继续容器化部署研究；
+    2.继续跟进浦发硅谷迁移和组织文档review；
+    
+    
+
+本周工作：
+1.浦发硅谷迁移改造方案文档编写、测试验证；
+2.解决centos8.2 neonsan安装包无法解决的问题；
+
+下周计划：
+1.继续容器化部署研究；
+2.浦发硅谷支撑；
+
+export PROXY="http://192.168.101.231:8990"
+export PROXYS="https://192.168.101.231:8990"
+export http_proxy=$PROXY
+export https_proxy=$PROXYS
+export HTTP_PROXY=$PROXY
+export HTTPS_PROXY=$PROXYS
+
+mount -t nfs 192.168.101.10:/z0 /z0
+
+
+
+本周工作：
+1；NEONSAN-943容器化部署NeonSAN:完成zookeeper的部署，正在进行galera数据库的部署，总体进度完成50%；
+
+下周计划：
+1.继续容器化部署；
+2.浦发硅谷迁移支撑；
+
+2020年年度工作总结：
+1.专业技能、岗位核心能力
 
  
