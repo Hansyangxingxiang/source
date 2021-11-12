@@ -57,9 +57,9 @@ NeonSAN 编译学习：访问 VCenter 控制台虚拟机创建；
 
 
 下载代码：
-git clone -b qa https://git.internal.yunify.com/SAN2.0/qfa.git
-git clone -b qa https://git.internal.yunify.com/SAN2.0/qfcenter.git
-git clone -b qa https://git.internal.yunify.com/SAN2.0/monitor.git
+git clone -b neonio https://git.internal.yunify.com/SAN2.0/qfa.git
+git clone -b neonio  https://git.internal.yunify.com/SAN2.0/qfcenter.git
+git clone -b neonio  https://git.internal.yunify.com/SAN2.0/monitor.git
 cd qfa/
 git submodule init 
 git submodule update
@@ -146,9 +146,9 @@ tar -zxvf gopath1.12.5.tar.gz -C /home/yangxx/
 export GOROOT=/home/yangxx/go
 export GOPATH=/home/yangxx/gopath
 export PATH=$GOROOT/bin:$PATH
-git clone -b v2.5.0-release https://git.internal.yunify.com/SAN2.0/qfa.git
+git clone -b 1-dumpzk-getqfcip https://git.internal.yunify.com/SAN2.0/qfa.git
 git checkout -b v2.5.0-release
-git clone -b v2.5.0-release https://git.internal.yunify.com/SAN2.0/qfcenter.git
+git clone -b 1-dumpzk-getqfcip https://git.internal.yunify.com/SAN2.0/qfcenter.git
 git clone -b v2.5.0-release https://git.internal.yunify.com/SAN2.0/monitor.git
 git clone https://git.internal.yunify.com/SAN2.0/libtoml.git
 
@@ -199,7 +199,7 @@ NEONSAN-653
 
  NEONSAN-34 【recovery volume】正在recovery的卷无法停止：1.删除一个正在恢复的卷，提示正在恢复；2.增加停止recovery的CLI
  
- neonfio -name=case -ioengine=qbd -direct=1 -bs=4k -volume=pool_name/yangxx4  -config_file=/etc/neonsan/qbd.conf -rw=randwrite -iodepth=10 -time_based -numjobs=1 -runtime=500 -use_tcp=1
+ neonfio -name=case -ioengine=qbd -direct=1 -bs=1M -volume=vol/test  -config_file=/etc/neonsan/qbd.conf -rw=read -iodepth=10 -time_based -numjobs=1 -runtime=500 -use_tcp=1
 
  本周工作：
 	1.完成NEONSAN-653[云平台易捷版]galera 集群在断电/恢复电力之后不能自动恢复：修改、验证：已经push，待review；
@@ -871,4 +871,1016 @@ mount -t nfs 192.168.101.10:/z0 /z0
 2020年年度工作总结：
 1.专业技能、岗位核心能力
 
+https://git.internal.yunify.com/SAN2.0/qfa/merge_requests/1398/，素香，NEONSAN-943 容器化部署NeonSAN 全部搞完了，包括portal 监控等相关的，相关的配置和脚本可以直接合入qa不？还是你看下？ 目前neonio的镜像我是直接用v3.0.4的安装包来制作的，改动了几处的代码，但是在本次MR没有合入，这部分我打算
+
+ # This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto eth6
+iface eth6 inet manual
+bond-master bond0
+
+auto eth7
+iface eth7 inet manual
+bond-master bond0
+
+auto bond0
+iface bond0 inet static
+        address 192.168.101.175
+        netmask 255.255.255.0
+        broadcast 192.168.101.255
+        gateway 192.168.101.1
+        bond-mode 4
+        bond-miimon 100
+        bond-slaves eth6 eth7
+
+auto eth4
+iface eth4 inet static
+        address 10.10.88.175
+        netmask 255.255.255.0
+        broadcast 10.10.88.255
+
+auto eth5
+iface eth5 inet static
+        address 10.10.99.175
+        netmask 255.255.255.0
+        broadcast 10.10.99.255
+        
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto eth4
+iface eth4 inet manual
+bond-master bond0
+
+auto eth5
+iface eth5 inet manual
+bond-master bond0
+
+auto bond0
+iface bond0 inet static
+	address 192.168.101.174
+	netmask 255.255.255.0
+	broadcast 192.168.101.255
+        gateway 192.168.101.1
+	bond-mode 1
+	bond-miimon 100
+	bond-slaves eth4 eth5
+
+auto eth6
+iface eth6 inet static
+	address 10.10.88.174
+	netmask 255.255.255.0
+	broadcast 10.10.88.255
+
+auto eth7
+iface eth7 inet static
+	address 10.10.99.174
+	netmask 255.255.255.0
+	broadcast 10.10.99.255    
+
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto eth6
+iface eth6 inet manual
+bond-master bond0
+
+auto eth7
+iface eth7 inet manual
+bond-master bond0
+
+auto bond0
+iface bond0 inet static
+	address 192.168.101.176
+	netmask 255.255.255.0
+	broadcast 192.168.101.255
+        gateway 192.168.101.1
+	bond-mode 4
+	bond-miimon 100
+	bond-slaves eth6 eth7
+
+auto eth4
+iface eth4 inet static
+	address 10.10.88.176
+	netmask 255.255.255.0
+	broadcast 10.10.88.255
+
+auto eth5
+iface eth5 inet static
+	address 10.10.99.176
+	netmask 255.255.255.0
+	broadcast 10.10.99.255   
+
+
+
+本周工作：
+1.配合neonio测试：1.跟杨泽凡/童进讲解neonio安装部署；2.给伍永红恢复174的容器测试环境；
+2.适配海光CPU的安装包，后来发现海光CPU也是X86的，使用的是标准的centos7.5的标准OS，目前编译也是使用标准的镜像来制作docker编译环境，所以应该用重新编译打包，可以直接拿以前出的过包来安装测试；
+3. 3.2 bug NEONSAN-684不用修改，分析NEONSAN-234的优化；
+
+下周计划：
+1.继续云原生容器化；
+2.3.2 bug    
+
+recovery.fast_recovery：
+2.5.5版本应该就没有什么问题了，但是我们大的版本有的会滞后2.5.5版本，也就是3.0.0版本可能不包含2.5.5版本的fix，3.0.4应该是没问题的
+
+
+
+本周工作：
+1.编译打包ubuntu18.04 arm环境的安装包；
+2.编译打包中嘉和信POC centos7.9环境的安装包；
+3.工单处理，目前4个，两个是已知bug，一个文档咨询类，还有一个迁移任务进度显示问题，代码分析不出原因，复现不出来；
+4.neonio需求文档和测试case的准备；
+
+下周计划：
+1.云原生容器化文档准备；
+2.3.2 bug   
+
+
+https://blog.csdn.net/u011708337/article/details/106051943/
+
+本周工作：
+1.NEONSAN-290：基于卷的性能监控；两种方案：（1）在store统计卷在该节点的io，center向store查询卷所有副本的io，monitor像center查询；（2）在client端统计卷的io；
+研究华为Fusionstorage的实现，它有vbs模块，负责卷管理和io的接入和处理，他的实现肯定是属于在client端做的；
+neonsan如果在client端做：(1).client是qbd，直接在client端部署monitor，monitor解析iostat、qbd -ld结果得到卷的iops和带宽，向promethus上报；
+                        （2）client是qemu，在neonsan lib中统计io，定期打印到日志，同样需要部署monitor，monitor解析日志得到iops、带宽向promethus上报；
+                        
+2.川航alive消失的问题，store卡死10个小时没日志的复现，目前复现不了；
+
+
+下周计划：
+3.2 bug    
+
+IaaS 给我们在公有云开放了一个后付费的公共子账号，可以用来搭建测试环境
+ks@yunify.com#neonsan
+apscohdnpnb5n1vcx8zbx12#4451nv8 
+
+dd if=/dev/zero of=/dev/nvme0n1  bs=1M count=20480 oflag=direct
+dd if=/dev/zero of=/dev/nvme1n1  bs=1M count=20480 oflag=direct 
+dd if=/dev/zero of=/dev/nvme2n1  bs=1M count=20480 oflag=direct     
+dd if=/dev/zero of=/dev/nvme3n1  bs=1M count=20480 oflag=direct
+
+
+
+
+docker tag registry.aliyuncs.com/google_containers/csi-provisioner:v2.2.2 k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+docker tag registry.aliyuncs.com/google_containers/csi-node-driver-registrar:v2.2.0 k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+docker tag registry.aliyuncs.com/google_containers/csi-attacher:v3.2.1 k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
+docker tag registry.aliyuncs.com/google_containers/csi-snapshotter:v4.1.1 k8s.gcr.io/sig-storage/csi-snapshotter:v4.1.1
+docker tag registry.aliyuncs.com/google_containers/csi-resizer:v1.2.0 k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+
+
+docker pull registry.aliyuncs.com/google_containers/csi-provisioner:v2.2.2 
+docker pull registry.aliyuncs.com/google_containers/csi-node-driver-registrar:v2.2.0
+docker pull registry.aliyuncs.com/google_containers/csi-attacher:v3.2.1
+docker pull registry.aliyuncs.com/google_containers/csi-snapshotter:v4.1.1
+docker pull registry.aliyuncs.com/google_containers/csi-resizer:v1.2.0
+
+
+kubectl api-resources --verbs=list --namespaced -o name  | xargs -n 1 kubectl get --show-kind --ignore-not-found -n rook-ceph
+
+#!/usr/bin/env bash
+DISK="/dev/sdb"
+
+# Zap the disk to a fresh, usable state (zap-all is important, b/c MBR has to be clean)
+
+# You will have to run this step for all disks.
+sgdisk --zap-all $DISK
+
+# Clean hdds with dd
+dd if=/dev/zero of="$DISK" bs=1M count=100 oflag=direct,dsync
+
+# Clean disks such as ssd with blkdiscard instead of dd
+blkdiscard $DISK
+
+# These steps only have to be run once on each node
+# If rook sets up osds using ceph-volume, teardown leaves some devices mapped that lock the disks.
+ls /dev/mapper/ceph-* | xargs -I% -- dmsetup remove %
+
+# ceph-volume setup can leave ceph-<UUID> directories in /dev and /dev/mapper (unnecessary clutter)
+rm -rf /dev/ceph-*
+rm -rf /dev/mapper/ceph--*
+
+# Inform the OS of partition table changes
+partprobe $DISK  
+
+
+本周工作：
+1.NEONSAN-290：基于卷的性能监控方案，在client统计性能：
+(1).client是qbd，直接在client端部署monitor，monitor解析iostat、qbd -ld结果得到卷的iops和带宽，向promethus上报；
+(2).client是qemu，部署monitor通过qemu命令查询到卷的io，向promethus上报；
+                        
+2.neonio的性能测试分析：（1）.物理部署时数据和管理的网络是分开，现在neonio默认是共用的，这个肯定影响, （2）是感觉增加pod这一层后，网络性能可能编差；(3).节点重启后zk概率出现选举失败，无法正常工作，通过加大tickTime的时间也还会概率出现，怀疑有两点：（1）是容器化部署时，IP用域名代替，启动的时候可能需要先通过DNS域名解析得到IP，再连接，这会增加时间;(2).可能做的镜像有问题,打算用别人的image来测试，看是否会出现；
+
+3.neonio支持在线部署的准备，申请dockerhub账号，上传镜像，ks meetup宣传材料准备提纲：（1）NeonIO 介绍；（2）NeonIO 部署；（3）NeonIO 展示；（4）NeonIO 案例 
+
+4.支撑EQ环境zk/数据库迁移改造完成；
+
+
+下周计划：
+1.neonio ks meetup宣传材料准备；
+2.neonio 故障和性能测试；
+
+
+
+
+在云原生场景下构建企业级存储方案
+
+neonio Quickstart：
+1.检查确保有可给供neonio的设备；
+2.检查是否已经安装QBD；
+3.添加helm repo；
+4.安装部署：helm install neonio ./neonio --namespace kube-system
+
+单机部署：helm install neonio ./neonio  --namespace kube-system --set sc.rep_count=1 --set center.servers=1 --set zookeeper.servers=1 --set galera.servers=1 --set store.servers=1 --set web.servers=1 --set redis.servers=1
+对接Promethus、altermanger: helm install neonio ./neonio  --namespace kube-system --set web.prometheus=true  --set web.alertmanager=true
+指定节点部署存储服务：通过对对应节点打label
+RDMA/TCP切换：helm install neonio ./neonio --namespace kube-system --set store.type=RDMA
+物理硬件的充分利用：helm install neonio ./neonio --namespace kube-system --set store.port=eth0 --set rep_port.port=eth1
+  
+                             
+rook-ceph Quickstart：
+1.检查确保有可给供ceph的设备；
+2.检查是否已经安装RBD；
+3.apt-get install -y lvm2
+4.下载代码：git clone --single-branch --branch master https://github.com/rook/rook.git
+5.cd rook/cluster/examples/kubernetes/ceph
+  kubectl create -f crds.yaml -f common.yaml -f operator.yaml
+  kubectl create -f cluster.yaml
+  
+单机部署：cd rook/cluster/examples/kubernetes/ceph
+kubectl create -f crds.yaml -f common.yaml -f operator.yaml
+kubectl create -f cluster-test.yaml
  
+对接Promethus、altermanger: 
+kubectl create -f service-monitor.yaml
+kubectl create -f prometheus.yaml
+kubectl create -f prometheus-service.yaml
+指定节点部署存储服务：通过修改cluster.yaml配置，指定需要部署存储服务组件节点的IP
+RDMA/TCP切换：ceph本身支持RDMA，rook-ceph不支持
+物理硬件的充分利用：rook-ceph不支持
+  
+《在云原生场景下构建企业级存储方案》
+随着云原生技术的日益普及的今天，对于无状态的应用已经非常成熟，有非常好的平滑扩展能力，但对于有状态的应用，数据需要持久化存储(即云原生存储)，这还有很大提升的空间，面临着很多挑战，本次分享主要有以下几点：
+1.云原生存储面临的挑战？
+2.目前云原生存储常见的解决方案，方案的不足、痛点；
+3.面对这些挑战，不足、痛点，云原生存储NeonIO是如何面对的；
+4.云原生存储NeonIO的性能表现；
+5.云原生存储NeonIO的应用场景；
+
+
+
+1.在云原生遇到的挑战章节最后加上CNCF的报告作为论点的支撑；
+2.常用云原生存储解决方案中提下优势，不要只讲劣势；
+3.部署灵活的那一页，字体太小，看不清；
+4.高性能那一页数据有问题：应该是单卷iops 100K
+5.最后一页内测计划，
+
+
+本周工作：
+1.neonio ks meetup PPT准备
+
+
+下周计划：
+1.neonio 故障和性能测试；
+
+Random Read/Write IOPS: 19.4k/20.5k. BW: 778MiB/s / 882MiB/s
+Average Latency (usec) Read/Write: 522.23/473.74
+Sequential Read/Write: 803MiB/s / 850MiB/s
+Mixed Random Read/Write IOPS: 13.5k/4491
+root@testr01n01:~/dbench-test# kubectl logs dbench-single-mhxs5
+
+Random Read/Write IOPS: 18.3k/19.1k. BW: 734MiB/s / 842MiB/s
+Average Latency (usec) Read/Write: 511.06/513.35
+Sequential Read/Write: 770MiB/s / 835MiB/s
+Mixed Random Read/Write IOPS: 13.6k/4529
+
+产品介绍/架构
+
+
+本周工作：
+1.出差上海，进行ks meetup 主题分享；
+2.ks meetup PPT内容文章化，提供给ks团队；
+3.研究helm charts和operate两种方式的部署；
+4.研究怎么直接使用k8s的etcd服务；
+
+
+下周计划：
+1.继续研究neonio切换etcd
+
+
+本周工作：
+1.neonio的支撑：目前有几个反馈问题：
+（1）.部署的时候zk store 没启动成功，没起来的原因都是他们环境资源不满足，应该都是一些爱好者，自己手里的环境都是在自己的电脑跑三个虚拟机来装的，所以这个资源上比较紧张，这些我通过给他们调整配置参数，勉强能够跑起来---这个我们可能需要在使用手册中增加部署neonio的规格说明；
+（2）web pod起不来，需要手动删除这个pod，让k8重新启动一个--这个有大概的思路怎么解决；
+（3）要不同OS版本的qbd包--这个跟晓军交流了一下，他们现在可以打出qbd dkms包，这个是qbd的kernel，可以适用在不同的OS版本，现在还需要把qbd的util部分容器化，这样的话neonio就不需要区分centos、ubuntu，以及不同OS的版本了
+
+2.neonio的优化，web pod起不来，需要手动删除这个pod的问题；增加组件依赖的检查日志，方面遇到问题时的排查；
+
+3.调研切换etcd的方式，目前倾向于单独部署etcd集群使用；
+
+4.讨论交流qbd容器场景不在依赖OS的问题，有两种方案，目前使用在qbd做成静态方式，由晓军开发，直接提供neonio使用即可；
+
+
+下周计划：
+1.继续研究neonio切换etcd；
+2.优化neonio；
+3.接手公有云gd2a区运维交流；
+
+
+本周工作：
+1.修改neonio卸载后重新部署或者节点重启zk POD不能正常回复的问题；
+2.neonio部署时自动能把满足条件的磁盘配置进store的，而无需指定磁盘的开发；
+3.neonio的性能测试，测试neonio管理网口/数据网口的性能，两种场景配置方式性能没有区别，和neonsan的性能比较，没有性能损耗；
+4.测试静态的qbd包，在ubuntu16.04.5 centos8.2作了测试，neonio是可以兼容centOS、ubuntu，不再需要区分ubuntu或者centos了；
+5.neonio github上README.md资料的准备，已经准备地差不多了，还有一些格式的调整；
+6.公有云gd2a区环境的熟悉；
+
+
+
+下周计划：
+1.继续研究neonio切换etcd；
+
+
+https://git.internal.yunify.com/SAN2.0/qfa/wikis/gd2a-cluster-info
+
+从7.240节点： san_gd2a 登录
+或跳板机：ssh root@139.198.122.6 -p 4120 然后ssh 10.16.102.2 -p22
+
+但是这种登录方式后面可能就不支持了，需要用何智上次说的那种方式
+
+
+容器微服务小、快、轻、独立这种特性
+
+
+本周工作：
+1.完成neonio计算和存储分离部署的开发：即k8s集群1部署neonio，k8s集群2通过CSI使用k8s集群1的存储；
+2.学习portworx云原生存储相关资料；
+3.学习etcd V3 API接口是使用方式；
+
+
+
+
+下周计划：
+1.meetup材料准备；
+2.值工单；
+
+https://go.microsoft.com/fwlink/p/?LinkId=534599
+
+
+
+HandleError->handleAioError-》increaseVolumeMetaVer
+            handleNotPirmary-》increaseVolumeMetaVer
+            handleSsdError-》increaseVolumeMetaVer
+AsyncCheckSsdStatus->            handleSsdOffline-》increaseVolumeMetaVer
+            handlePrepareFail-》increaseVolumeMetaVer
+            
+prepareVolume-> handleSsdAbsenseOnPrepare-》increaseVolumeMetaVer
+RelocatePrimaryByStore-》increaseVolumeMetaVer
+SetQos-》increaseVolumeMetaVer
+DeleteQos-》increaseVolumeMetaVer
+RepairVolume-》increaseVolumeMetaVer
+DoRecoveryVolume-》increaseVolumeMetaVer
+doReassignReplica-》increaseVolumeMetaVer
+migrateReplicaById-》increaseVolumeMetaVer
+DoScrubVolume-》increaseVolumeMetaVer
+RelocatePrimary-》increaseVolumeMetaVer
+RemoveSsd-》increaseVolumeMetaVer
+CreateSnapshot-》increaseVolumeMetaVer
+FailoverVolume-》increaseVolumeMetaVer
+AddMetroReplica-》 increaseVolumeMetaVer
+DelMetroReplica-》 increaseVolumeMetaVer
+doSetVolumeRole-》increaseVolumeMetaVer
+checkDiskErrorForVolume-》increaseVolumeMetaVer
+
+
+
+center功能:
+1.pool卷组相关的功能；
+2.rg资源组相关的功能
+3.volume相关的功能；
+4.snapshot快照相关的功能
+5.clone克隆相关的功能
+6.故障恢复相关的功能，recovery volume/repair volume等
+
+
+7.Qos相关的功能
+8.故障恢复相关的功能，recovery volume/repair volume等
+9.互斥卷组相关的功能
+10.ISCSI管理相关的功能
+11.灾备相关功能
+12.加密相关的功能
+
+NewJob MqInit
+
+本周工作：
+1.值工单：1.处理中金项目clone失败的问题；2.ARM环境中卷meta_ver递增到很大的问题；
+2.梳理neonio与zk有交互的地方和center功能，考虑如果进行裁剪的化可以只保留哪些功能，学习client-go leader选举的代码；
+3.lib库2.2.4 window的编译，编译已经通过，链接出现的问题，在和胡银坤正在分析；
+
+
+
+
+下周计划：
+1.neonio轻量化改造的事情。
+
+本周工作：
+1.neonio轻量化改造：（1）.研究client-go informer机制，学习使用Informer来进行监控/通知的实例代码；
+                    （2）.client-go开发测试环境的配置安装，能够把demo代码编译通过并运行；
+2.《NeonIO云原生存储应用及实践》博客内容的编写
+
+下周计划：
+1.继续neonio轻量化改造。
+
+
+
+apt install -y librdmacm-dev libaio-dev libssl-dev uuid-dev libcurl4-openssl-dev
+
+
+https://git.internal.yunify.com/SAN2.0/qfa/wikis/gd2a-cluster-info
+
+
+从7.240节点： san_gd2a 登录
+或跳板机：ssh root@139.198.122.6 -p 4120 然后ssh 10.16.102.2 -p22
+
+但是这种登录方式后面可能就不支持了，需要用何智上次说的那种方式
+
+
+云堡垒机
+hansyang/Yangxing@198884
+
+GD2A-广东2区 (GD2A) NEONSAN 设备调整网卡队列长度通知
+
+内容：
+	
+尊敬的用户您好：
+	
+我们计划于2021年7月15日 22:00 - 2021年7月15日 24:00 对广东2区（GD2A）的NEONSAN 设备调整网卡的队列长度，正常情况下不会有任何影响。极个别极端情况下可能会 IO 长时间夯住(大于5分钟)， 则您需要将虚拟机关闭，然后重新开机即可解决。
+我们的技术团队将在升级期间全程保障，感谢您长期以来对青云QingCloud的支持。
+
+青云QingCloud
+
+10.16.102.11
+10.16.102.21
+10.16.102.31
+
+
+本周工作：
+1.neonio轻量化改造：center leader 选举的修改，目前代码基本已经改完，待测试;
+                    
+2.运维：gd2a磁盘有media error告警定位处理；熟悉修改网卡队列文档和事先熟悉环境信息
+    
+下周计划：
+1.继续neonio轻量化改造。
+
+
+
+
+
+echo "lease_duration=2" >> /etc/neonsan/center.conf
+echo "renew_deadline=2" >> /etc/neonsan/center.conf
+echo "retry_period=1" >> /etc/neonsan/center.conf
+
+retry_period < renew_deadline < lease_duration
+
+root@gd2ar19n02:~# neonsan list_store
+Store Count:  9
++----+--------------+------------+----------+--------+-----------+---------+-------------------+----------------+----------------+------------+
+| ID |   MNGT IP    |    NAME    | POSITION | STATUS |  CHASSIS  | DOMAIN  | PHYSICAL CAPACITY | PHYSICAL USED  |  LOGICAL USED  | VOLUME CNT |
++----+--------------+------------+----------+--------+-----------+---------+-------------------+----------------+----------------+------------+
+|  7 | 10.16.102.12 | gd2ar19n02 |        4 | OK     | ch1       | gd2ar19 |    32001801322496 |  1197004029952 |  6345814179840 |         19 |
+|  8 | 10.16.102.22 | gd2ar20n02 |        1 | OK     | ch1       | gd2ar20 |    32001801322496 |  2069557673984 |  5712306503680 |         18 |
+|  9 | 10.16.102.32 | gd2ar21n02 |        2 | OK     | ch1       | gd2ar21 |    32001801322496 |  1943216848896 |  3876207984640 |         15 |
+| 10 | 10.16.102.10 | gd2ar19n00 |        3 | OK     | chassis19 | domain1 |    32006252888064 | 12931475439616 | 14901389033472 |         14 |
+| 11 | 10.16.102.11 | gd2ar19n01 |        4 | OK     |         0 | domain1 |    23684627570688 | 12676528865280 | 11201274707968 |          9 |
+| 20 | 10.16.102.20 | gd2ar20n00 |        1 | OK     | chassis20 | domain1 |    32006252888064 | 14191444361216 | 14845554458624 |         12 |
+| 21 | 10.16.102.21 | gd2ar20n01 |        2 | OK     |         0 | domain1 |    23684627570688 | 12476410232832 | 11368778432512 |          7 |
+| 30 | 10.16.102.30 | gd2ar21n00 |        3 | OK     | chassis21 | domain1 |    32006252888064 | 14860586844160 | 15092515078144 |         16 |
+| 31 | 10.16.102.31 | gd2ar21n01 |        4 | OK     |         0 | domain1 |     7681501126656 |  4213161590784 |  3801046056960 |          3 |
++----+--------------+------------+----------+--------+-----------+---------+-------------------+----------------+----------------+------------+
+hansyang@yunify.com
+Yangxing@198884
+
+openvpn --daemon --cd /etc/openvpn --config config.ovpn --log-append /var/log/openvpn.log
+
+POD1="csi-neonsan-controller-ff598bbf5-txnpm"
+POD2="csi-neonsan-node-q5fqd"
+kubectl -n=kube-system exec $POD1 -- mkdir /etc/kubernetes/
+kubectl -n=kube-system exec $POD2  -- mkdir /etc/kubernetes/
+kubectl cp ../dockerfile/neonio-center/admin.conf -n=kube-system $POD1:/etc/kubernetes/
+kubectl cp ../dockerfile/neonio-center/admin.conf -n=kube-system $POD2:/etc/kubernetes/
+
+center异步任务的改造：
+目前center利用zk实现如下14种工作队列的异步任务：
+rebalance_cluster, stretch_transfer, recovery_volume, scrub_volume, snapshot_regular, metro_sync, rebalance_volume, rebalance_ssd, metro_sync_buffer, clone_volume_sync, gc, move_volume, general_operation, local_access
+利用client-go代替zk实现工作队列异步任务，现在以recovery_volume的异步任务为例
+1.在实现neonio的operate部署创建recovery_volume的CRD；
+2.在center在anto_recovery开关打开检测到需要进行recovery_volume或者由cli触发recovery_volume的时候创建recovery_volume的CRD的对象；
+3.center按照client-go中workqueue demo（https://github.com/kubernetes/client-go/blob/master/examples/workqueue/main.go）实现watch recovery_volume的CRD，当recovery_volume的CRD有add的操作（即创建recovery_volume的CRD的对象）会把recovery_volume的CRD的对象加入到queue中，由queue保证先进先出实现recovery_volume任务的执行顺序，任务执行成功更新recovery_volume的CRD的对象。
+
+go get -v github.com/pelletier/go-toml
+go get -v github.com/samuel/go-zookeeper
+go get -v github.com/sirupsen/logrus
+go get -v k8s.io/apimachinery
+go get -v k8s.io/client-go
+go get -v github.com/arthurkiller/rollingwriter
+go get -v github.com/go-sql-driver/mysql
+go get -v xorm.io/core
+go get -v github.com/go-xorm/xorm
+go get -v golang.org/x/sys
+go get -v golang.org/x/crypto
+go get -v github.com/go-uuid/uuid
+go get -v github.com/robfig/cron
+go get -v github.com/gogo/protobuf
+go get -v github.com/google/gofuzz
+go get -v xorm.io/builder
+go get -v xorm.io/core
+go get -v k8s.io/klog/v2
+go get -v k8s.io/api
+go get -v github.com/imdario/mergo
+go get -v github.com/spf13/pflag
+go get -v golang.org/x/term
+go get -v golang.org/x/net
+go get -v gopkg.in/inf.v0
+go get -v github.com/google/go-cmp
+go get -v sigs.k8s.io/structured-merge-diff/v4
+go get -v github.com/golang/protobuf
+go get -v github.com/googleapis/gnostic
+go get -v golang.org/x/time
+go get -v k8s.io/utils
+go get -v github.com/go-logr/logr
+go get -v github.com/davecgh/go-spew
+go get -v golang.org/x/oauth2
+go get -v github.com/json-iterator/go
+go get -v gopkg.in/yaml.v2
+go get -v google.golang.org/protobuf
+go get -v github.com/modern-go/reflect2
+go get -v sigs.k8s.io/yaml
+go get -v github.com/modern-go/concurrent
+go get -v golang.org/x/text
+go get -v google.golang.org/appengine
+go get -v k8s.io/client-go
+go get -v github.com/mattn/go-runewidth
+go get -v golang.org/x/crypto
+go get -v github.com/go-sql-driver/mysql
+go get -v golang.org/x/net
+go get -v github.com/rivo/uniseg
+go get -v github.com/satori/go.uuid
+go get -v golang.org/x/crypto
+go get -v golang.org/x/sys
+
+
+kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl get --show-kind --ignore-not-found -n rook-ceph
+
+docker load -i qbd-init.tar.gz 
+docker load -i store.tar.gz 
+docker load -i center.tar.gz
+
+
+本周工作：
+1.neonio轻量化改造：recovery_volume异步任务的用k8s workquque功能完成，基本功能测试通过，目前在进行genera_operation异步任务的修改，在整理代码框架，尽量代码复用，减少代码冗余度，
+测试过程中发现的问题：
+一进行recovery_volume出现leader center切换，原因是center与k8s的心跳超时，通过加长lease的占用时间，并且修改成部署的时候这个参数配置成可以配置；
+k8s的lease锁机制进行leader选举，当所有center都挂后，k8s中lease的信息还存在，就会导致lib、cli等查询leader center ip不准确，可能要结合center的endpoint的功能来实现或者调研k8s kube-controller组件的选举机制
+
+还有的工作:delete_job stop_job,list_job, cli触发job的时候可以指定job的执行时间；
+                    
+2.代码review：1296，1308
+
+3.协助志阳搭建rook-ceph的环境；
+
+4.SUSE-15-SP2编译环境的搭建，SUSE安装依赖包比较麻烦，跟晓军沟通优先级放低；
+
+    
+下周计划：
+1.继续neonio轻量化改造；
+2.值工单；
+
+卷降级：
+1.登录到leader center节点：grep -a "Set replica StatusError" /var/log/neoncenter.log
+2.查询卷分布所在的节点： neonsan list_replica_location -- volume vol/xxxxxx
+3.登录到卷分布的所在节点查store日志：grep -a "ReportError" /var/log/neonstore.log,查看时间前一两分钟报错情况
+
+for client /127.0.0.1
+
+
+2021-08-25 16:32:56,073 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@215] - Accepted socket connection from /192.168.101.28:39330
+2021-08-25 16:32:56,073 [myid:3] - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@903] - Connection request from old client /192.168.101.28:39330; will be dropped if server is in r-o mode
+2021-08-25 16:32:56,073 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@949] - Client attempting to establish new session at /192.168.101.28:39330
+2021-08-25 16:32:56,074 [myid:3] - INFO  [CommitProcessor:3:ZooKeeperServer@694] - Established session 0x3012a0927ffb795 with negotiated timeout 5000 for client /192.168.101.28:39330
+2021-08-25 16:32:56,374 [myid:3] - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@376] - Unable to read additional data from client sessionid 0x3012a0927ffb795, likely client has closed socket
+2021-08-25 16:32:56,374 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1056] - Closed socket connection for client /192.168.101.28:39330 which had sessionid 0x3012a0927ffb795
+2021-08-25 16:33:18,508 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@215] - Accepted socket connection from /192.168.101.25:40588
+2021-08-25 16:33:18,508 [myid:3] - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@903] - Connection request from old client /192.168.101.25:40588; will be dropped if server is in r-o mode
+2021-08-25 16:33:18,508 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@949] - Client attempting to establish new session at /192.168.101.25:40588
+2021-08-25 16:33:18,509 [myid:3] - INFO  [CommitProcessor:3:ZooKeeperServer@694] - Established session 0x3012a0927ffb796 with negotiated timeout 4000 for client /192.168.101.25:40588
+2021-08-25 16:33:18,512 [myid:3] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1056] - Closed socket connection for client /192.168.101.25:40588 which had sessionid 0x3012a0927ffb796
+
+
+grep -a "Accepted socket connection from /10.176.0.44" /var/log/zookeeper/
+
+
+neonsan list_replica_location --store_id 30 >> list_replica_location_30.txt
+neonsan list_replica_location --store_id 32 >> list_replica_location_32.txt
+
+neonsan list_audit >> list_audit.txt
+
+
+neonsan add_ini -initiatorip 172.16.11.161  -wwn iqn.1993-08.org.debian:01:592ba1712453
+neonsan add_vol_ini -vip  172.16.11.181  -targetwwn iqn.2012-04.com.qs:san.test -initiatorip 172.16.11.161 -volume vol/test
+iscsiadm -m discovery  -t sendtargets -p 172.16.11.181
+lsblk
+iscsiadm -m node -T iqn.2012-04.com.qs:san.test -l
+
+fio --name=test --filename=D\:\test.bin --ioengine=windowsaio --thread=1 --direct=1 --size=10G --bs=1M --iodepth=1 --rw=read
+
+fio --name=test --filename=C:\Users\yangxx\qingcloud\tmp\test.bin --ioengine=windowsaio --thread=1 --direct=1 --size=10G --bs=4k --iodepth=1 --rw=randwrite
+
+win qbd:
+2.32G = 2375.68MB
+2分钟1s = 121S
+
+2375.68/121 = 19.633MB/s 
+
+D:\Windows => D:\QAX\Windows
+
+
+ISCSI:
+2.32G = 2375.68MB
+50S
+46S
+
+2375.68/50 = 47.53
+
+D:\Windows => D:\QAX\Windows
+
+
+
+
+\\172.16.11.244\qax\Windows > \\172.16.11.244\新建文件夹\Windows 
+
+
+kubectl edit role neonio-center -n neonio
+
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - generaljobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete 
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - recoveryjobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete 
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - gcjobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - movejobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - clonejobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - snapshotjobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete 
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - rebalancessdjobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - rebalanceclusterjobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - neonio.qingstor.io
+  resources:
+  - scrubvolumejobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - events.k8s.io
+  resources:
+  - Event
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  
+  
+gd2a 3台neonsan闪存节点的测试：
+
+1）检查网口bond方式为同网卡的2个口做bond --配置正确
+
+2）新全闪RG应该有SSD,SSD2这两个LABEL。
+
+3）如果是对老RG进行扩容，则要求1（以后默认bond方式为同网卡做bond），而不要求2，并且老RG必须不能有SSD2这个LABEL，以防止E3主机用RDMA连接老RG 存储节点。
+
+
+neonsan create_volume --volume test/test_e3 --size 1000G --repcount 2 --rg testSSD2
+
+fio -direct=1 -filename=/dev/qbd0 -name=test -iodepth=32 -bs=4k  -numjobs=1 -rw=randwrite -ioengine=libaio -time_based -runtime=60 -group_reporting
+
+neonfio -direct=1 -volume=test/test_e3 -name=fio_test_4k_randwrite_32_1  -ioengine=qbd -bs=4k -runtime=60 -size=128G -time_based -rw=randwrite -config_file=/etc/neonsan/qbd.conf  -use_tcp=0 -group_reporting -iodepth=32 -numjobs=1
+
+neonfio -direct=1 -volume=test/test_e3 -name=test -ioengine=qbd -bs=4k -runtime=60 -size=128G -config_file=/etc/neonsan/qbd.conf -rw=randwrite -time_based -use_tcp=1 -group_reporting -iodepth=32 -numjobs=1
+
+neonfio -name=case -ioengine=qbd -direct=1 -bs=4k -volume=test/test_e3  -config_file=/etc/neonsan/qbd.conf -rw=randwrite -iodepth=32 -time_based -numjobs=1 -runtime=60 -use_tcp=0
+
+qbd -m rdma://test/test_e3
+
+fio -direct=1 -filename=/dev/nvme3n1 -name=test -iodepth=64 -bs=128K  -numjobs=1 -rw=write -ioengine=libaio -time_based -runtime=60 -group_reporting
+
+root@gd2ar25n06:~# fio -direct=1 -filename=/dev/nvme3n1 -name=test -iodepth=64 -bs=128K  -numjobs=1 -rw=write -ioengine=libaio -time_based -runtime=60 -group_reporting
+test: (g=0): rw=write, bs=128K-128K/128K-128K/128K-128K, ioengine=libaio, iodepth=64
+fio-2.2.10
+Starting 1 process
+Jobs: 1 (f=1): [W(1)] [100.0% done] [0KB/2695MB/0KB /s] [0/21.6K/0 iops] [eta 00m:00s]
+test: (groupid=0, jobs=1): err= 0: pid=6756: Tue Sep 28 12:20:47 2021
+  write: io=164436MB, bw=2740.5MB/s, iops=21923, runt= 60003msec
+    slat (usec): min=5, max=1038, avg=15.05, stdev= 4.55
+    clat (usec): min=1111, max=9993, avg=2903.03, stdev=530.73
+     lat (usec): min=1127, max=10004, avg=2918.26, stdev=530.77
+    clat percentiles (usec):
+     |  1.00th=[ 2128],  5.00th=[ 2256], 10.00th=[ 2352], 20.00th=[ 2480],
+     | 30.00th=[ 2672], 40.00th=[ 2800], 50.00th=[ 2896], 60.00th=[ 2960],
+     | 70.00th=[ 3056], 80.00th=[ 3152], 90.00th=[ 3376], 95.00th=[ 3728],
+     | 99.00th=[ 4448], 99.50th=[ 5280], 99.90th=[ 8640], 99.95th=[ 9536],
+     | 99.99th=[ 9792]
+    bw (MB  /s): min= 2600, max= 2831, per=100.00%, avg=2741.13, stdev=49.94
+    lat (msec) : 2=0.22%, 4=97.32%, 10=2.46%
+  cpu          : usr=22.52%, sys=26.34%, ctx=1203752, majf=0, minf=10372
+  IO depths    : 1=0.1%, 2=0.1%, 4=0.1%, 8=0.1%, 16=0.1%, 32=0.1%, >=64=100.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.1%, >=64=0.0%
+     issued    : total=r=0/w=1315485/d=0, short=r=0/w=0/d=0, drop=r=0/w=0/d=0
+     latency   : target=0, window=0, percentile=100.00%, depth=64
+
+Run status group 0 (all jobs):
+  WRITE: io=164436MB, aggrb=2740.5MB/s, minb=2740.5MB/s, maxb=2740.5MB/s, mint=60003msec, maxt=60003msec
+
+Disk stats (read/write):
+  nvme3n1: ios=41/1313948, merge=0/0, ticks=8/3802884, in_queue=3750776, util=99.85%
+  
+root@gd2ar25n06:~# fio -direct=1 -filename=/dev/nvme3n1 -name=test -iodepth=64 -bs=128K  -numjobs=1 -rw=read -ioengine=libaio -time_based -runtime=60 -group_reporting
+test: (g=0): rw=read, bs=128K-128K/128K-128K/128K-128K, ioengine=libaio, iodepth=64
+fio-2.2.10
+Starting 1 process
+Jobs: 1 (f=1): [R(1)] [100.0% done] [3227MB/0KB/0KB /s] [25.9K/0/0 iops] [eta 00m:00s]
+test: (groupid=0, jobs=1): err= 0: pid=7158: Tue Sep 28 12:22:33 2021
+  read : io=193007MB, bw=3216.7MB/s, iops=25733, runt= 60002msec
+    slat (usec): min=4, max=608, avg=12.88, stdev= 3.67
+    clat (usec): min=67, max=33698, avg=2472.82, stdev=1172.06
+     lat (usec): min=81, max=33709, avg=2485.91, stdev=1172.05
+    clat percentiles (usec):
+     |  1.00th=[  548],  5.00th=[  868], 10.00th=[ 1112], 20.00th=[ 1432],
+     | 30.00th=[ 1784], 40.00th=[ 2192], 50.00th=[ 2416], 60.00th=[ 2544],
+     | 70.00th=[ 2800], 80.00th=[ 3312], 90.00th=[ 4048], 95.00th=[ 4704],
+     | 99.00th=[ 5728], 99.50th=[ 5920], 99.90th=[ 7328], 99.95th=[ 9280],
+     | 99.99th=[15424]
+    bw (MB  /s): min= 2172, max= 3257, per=100.00%, avg=3216.86, stdev=98.54
+    lat (usec) : 100=0.01%, 250=0.02%, 500=0.58%, 750=2.94%, 1000=3.53%
+    lat (msec) : 2=28.00%, 4=54.52%, 10=10.35%, 20=0.04%, 50=0.01%
+  cpu          : usr=6.87%, sys=43.25%, ctx=858444, majf=0, minf=8273
+  IO depths    : 1=0.1%, 2=0.1%, 4=0.1%, 8=0.1%, 16=0.1%, 32=0.1%, >=64=100.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.1%, >=64=0.0%
+     issued    : total=r=1544052/w=0/d=0, short=r=0/w=0/d=0, drop=r=0/w=0/d=0
+     latency   : target=0, window=0, percentile=100.00%, depth=64
+
+Run status group 0 (all jobs):
+   READ: io=193007MB, aggrb=3216.7MB/s, minb=3216.7MB/s, maxb=3216.7MB/s, mint=60002msec, maxt=60002msec
+
+Disk stats (read/write):
+  nvme3n1: ios=1542417/0, merge=0/0, ticks=3793708/0, in_queue=3751192, util=99.86%
+
+dd if=/dev/zero of=/dev/nvme3n1 bs=10M count=2048 oflag=direct
+
+DELETE FROM candidate_disk WHERE id=47；
+
+
+
+本周工作：
+1.完成gd2a e3的性能测试:SSD本身性能及网络损耗顺序读写未达标（iodepth=32，bs=64k，顺序写2207MB，读2694MB，写2669MB，标准顺序读2999）
+裸SSD测试数据 bs=128K，iodepth=64，顺序读写3216.7/2740.5（官方性能3450/2850）),扩容的e3服务器已经按照要求加入新建的SSDRG2资源组
+                    
+2.neonio完成rebalance_ssd,rebalance_cluster,scrub_volume异步任务的改造，目前异步任务的改造已经完成；
+
+3.完成UOS、麒麟ARM NeonSAN的版本的编译打包，已经提供给neil;
+
+curl "http://192.168.101.174:2600/qfa?op=enter_maintenance&store_id=192168101174"
+curl "http://192.168.101.174:2600/fast_chan?op=quit_maintenance&store_id=192168101174"
+curl "http://192.168.101.174:2600/qfa?op=stat_replica"
+curl "http://192.168.101.174:2600/qfa?op=trim_ssd&ssd_uuid=7bb65eeb-fbfb-45e0-9b4b-02473c34f23f"
+curl "http:192.168.101.174:2600/qfa?op=rebalance_primary_replica&limit=1"
+
+议题：QingStor NeonIO云原生与存储之实践
+QingStor NeonIO是一款支持容器化部署的企业级分布式块存储系统，能够给Kubernetes平台上提供动态创建（dynamic provisioning)持久存储卷（persistent volume)的能力,支持clone、snapshot、resstore、resize等功能。
+本次分享将系统介绍QingStor NeonIO的云原生架构和应用实践，以及在应用实践过程中遇到的问题和解决办法。
+
+内容大纲：
+1.QingStor NeonIO云原生系统架构介绍；
+2.QingStor NeonIO实际应用案例；
+3.使用云原生架构带来交付、运维上的效率提升；
+4.云原生与存储未来演进趋势思考；
+
+听众受益：
+1.了解云原生与存储最新的演进趋势
+2.了解QingStor NeonIO云原生与存储的实践经验；
+3.了解云原生化后如何带来开发、交付、运维效率上的提升；
+
+
+
+本周工作：
+1.neonio轻量化去zk改造完成：
+2.研究openebs CAS容器存储，研究jiva存储的引擎的使用和原理；
+
+
+
+议题：从QingStor NeonIO谈云原生存储架构的演进和思考
+QingStor NeonIO是一款支持容器化部署的企业级分布式块存储系统，能够给Kubernetes平台上提供动态创建（dynamic provisioning)持久存储卷（persistent volume)的能力,支持clone、snapshot、resstore、resize等功能。
+本次分享将介绍云原生存储的挑战、目前的常见的解决方案、NeonIO的云原生架构以及对未来架构的演进和思考。
+
+内容大纲：
+1.什么是云原生存储；
+2.云原生存储面临的挑战；
+3.CAS容器存储的理念；
+4.常见云原生存储的解决方案；
+5.介绍NeonIO架构和原理；
+6.云原生存储架构的演进方向和思考；
+
+听众受益：
+1.了解云原生与存储最新的演进趋势
+2.了解QingStor NeonIO云原生存储的架构和原理；
+3.了解云原生化后如何带来开发、交付、运维效率上的提升；
+4.了解云原生存储后续架构的演进方向；
+
+痛点：
+1.大规模动态快速的创建销毁PV的能力；
+2.抛弃传统分布式的思维方式，拥抱云原生CAS架构；
+
+
+主题：云原生存储介绍和应用实践
+大纲：
+1.什么是云原生存储
+2.为什么需要云原生存储
+3.云原生存储两种路线
+4.QingStor的云原生存储及应用实践
+
+问题1：上面提到OpenEBS、Rook-Ceph存产品的对比，同时也提到他们的优点点和缺点，请问一下，neonio相比于他们，有什么优势？
+答：在性能上的优势，从上面提到的性能表现中，neonio在IOPS、时延上都有很大的优势，NeonIO采用全闪的分布式存储架构，支持RDMA，client端采用自研的qbd协议（当然也支持普通磁盘HDD，TCP网络连接），天生就是为了高IPOS、低
+时延而生，同时也支持clone、snapshot、restore、resize等企业级特性，OpenEBS LocalPV没有高可用功能，cstor、jiva性能比较差，当然既说openEBS正在开发的存储引擎mayastor专为解决性能问题设计，支持nvme磁盘，客户端协议用nvmeof，我们也在期待，而ceph的IO路径很长，性能很难和neonio相比。
+
+问题2：我们在使用需要过程中，需要用到跨主机的pod使用共享目录,neonio支持文件存储吗？
+答：不支持,但是我们qingstor的其他团队后面也会推出云原生文件存储
+
+
+curl "http://$(qfcip):2600/qfa?op=diff_snapshot&volume_name=test10&pool_name=vol&base=snap1&end=snap2"
+
+在云原生技术日益普及的今天，云原生技术在生产环境中越来越多的被使用，用户应用正在从无状态应用程序扩展到需要持久化存储支持的有状态应用程序
+
+store节点上线：
+1：OnClientConnStatusChange-》UpdateStoreStatus（更新到数据库） -》 HandleConnByStore（发送给store建立连接）
+2. WatchStoreTimer（从数据库查询store状态，如果是offine） -》 HandleConnByStore（发送给store断开连接）
+
+
+https://golang.google.cn/dl/go1.16.windows-amd64.msi
+
+
+
+我觉得我们用vscode阅读代码和编写代码的时候不能跳转，阅读代码很不方便，需要很多一些复杂的配置才能实现代码跳转，我觉得这是一个痛点，有同事也说过不能跳转非常的难受，因此我总结了一下vscode配置，并且进行了一些自动化，现在配置起来简单多了，有兴趣的或者有需要的可以按照如下链接进行配置：https://cwiki.yunify.com/pages/viewpage.action?pageId=89791729
+
+
+
+
+1.安装go编译环境
+# 安装go
+tar -zxvf go1.12.5.linux-amd64.tar.gz
+mv go /usr/local/
+export PATH=/usr/local/go/bin/:$PATH
+
+# 安装gopath
+tar -zxvf  gopath1.12.5.tar.gz
+mkdir -p /z0
+mv z0/gopath /z0
+
+2.解压代码，执行编译脚本
+tar -zxvf neonsan_jenkins_v3.1.9.tar.gz
+cd neonsan_jenkins_v3.1.9/builder/qfa/scripts/
+./jenkins.sh
+
+
+1.跟踪上周工单遗留下来蓝月亮的问题：虚拟机重启原因是磁盘故障导致dispatcher夯，导致center卡住，引起openvolume超时的问题，目前服务找硬件厂商找故障原因，没有找到原因，现在是直接换了盘；
+2.gd2a cas缓存盘更换完成；
+3.整理了一下neonio除了去mysql外目前还可以做的一些工作，并初步排了一下优先级；
+4.学习备份功能和IO流程的代码，反馈到vscode看代码不跳转的问题，于是就把之前的配置梳理一遍，并自动化，形成wiki文档；
+
+
+
+ dpkg -r pitrix-neoncenter-dbg pitrix-neonsan-tool pitrix-neonstore-dbg && cd /z0/yangxingxiang/qa/debs-ubuntu_16.04.5 && dpkg -i pitrix-neoncenter-dbg-3.2.1.0.0.1.deb pitrix-neonsan-tool-3.2.1.0.0.1.deb pitrix-neonstore-dbg-3.2.1.0.0.1.deb && supervisorctl stop neoncenter neonstore && supervisorctl start neoncenter neonstore
+
+cd /z0/yangxingxiang/qa/debs-ubuntu_16.04.5/ && dpkg -i pitrix-neoncenter-dbg-3.1.1.0.0.1.deb pitrix-neonsan-monitor-3.1.1.0.0.1.deb  pitrix-neonsan-tool-3.1.1.0.0.1.deb pitrix-neonstore-dbg-3.1.1.0.0.1.deb && supervisorctl stop neoncenter neonmonitor neonstore && supervisorctl start neoncenter neonmonitor neonstore
+
+#export PROXY="http://192.168.101.231:8990"
+#export PROXYS="https://192.168.101.231:8990"
+#export http_proxy=$PROXY
+#export https_proxy=$PROXYS
+#export HTTP_PROXY=$PROXY
+#export HTTPS_PROXY=$PROXYS
