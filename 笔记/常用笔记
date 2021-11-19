@@ -1878,9 +1878,19 @@ cd neonsan_jenkins_v3.1.9/builder/qfa/scripts/
 
 cd /z0/yangxingxiang/qa/debs-ubuntu_16.04.5/ && dpkg -i pitrix-neoncenter-dbg-3.1.1.0.0.1.deb pitrix-neonsan-monitor-3.1.1.0.0.1.deb  pitrix-neonsan-tool-3.1.1.0.0.1.deb pitrix-neonstore-dbg-3.1.1.0.0.1.deb && supervisorctl stop neoncenter neonmonitor neonstore && supervisorctl start neoncenter neonmonitor neonstore
 
-#export PROXY="http://192.168.101.231:8990"
-#export PROXYS="https://192.168.101.231:8990"
-#export http_proxy=$PROXY
-#export https_proxy=$PROXYS
-#export HTTP_PROXY=$PROXY
-#export HTTPS_PROXY=$PROXYS
+export PROXY="http://192.168.101.231:8990"
+export PROXYS="https://192.168.101.231:8990"
+export http_proxy=$PROXY
+export https_proxy=$PROXYS
+export HTTP_PROXY=$PROXY
+export HTTPS_PROXY=$PROXYS
+
+
+https://172.30.30.175/
+174 175 176 这个几个登陆BMC的密码：admin/admin
+
+https://yunify.anybox.qingcloud.com/folders/738223 yop/zhu1241jie
+
+
+ln -s ../../../subsystems/nvme-subsystem-name nvme-subsystem-name
+ln: failed to create symbolic link 'nvme-subsystem-name': No such device
